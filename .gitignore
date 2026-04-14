@@ -35,3 +35,33 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Geçici dosyalar ve dizinler
+.terraform/
+.terraform.*
+
+# Terraform state dosyaları (KESİNLİKLE GİT'E EKLENMEMELİ!)
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Hassas değişken dosyaları (.tfvars içinde şifre vs. olabilir)
+*.tfvars
+*.tfvars.json
+
+# Override dosyaları
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# İsteğe bağlı: .terraform.lock.hcl
+# Not: Takım çalışmasında eklentilerin versiyonlarını sabitlemek için bu dosyanın git'e eklenmesi ÖNERİLİR.
+# O yüzden ".terraform.lock.hcl" dosyasını kasıtlı olarak ignore ETMİYORUZ.
+
+# Editör/.OS dosyaları
+.DS_Store
+.vscode/
+.idea/
+*.swp

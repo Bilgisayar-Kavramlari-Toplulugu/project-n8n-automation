@@ -1,0 +1,35 @@
+name: "Terraform Destroy"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform-destroy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TF_VAR_n8n_password: ${{ secrets.N8N_PASSWORD || 'destroy-placeholder-password' }}
+      TF_VAR_ssh_public_key: ${{ secrets.SSH_PUBLIC_KEY || '' }}
+      TF_VAR_ssh_allowed_cidrs: ${{ secrets.SSH_ALLOWED_CIDRS || '[]' }}
+      AWS_REGION: "eu-central-1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -reconfigure
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve

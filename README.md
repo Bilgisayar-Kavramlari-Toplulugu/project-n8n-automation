@@ -1,148 +1,147 @@
-# n8n-automation (Örnek)
+# ☁️ N8N + Caddy — AWS Terraform Otomasyonu (v2 - GitHub Actions)
 
-<div align="center">
-
-[![GitHub](https://img.shields.io/badge/GitHub-Bilgisayar-Kavramlari-Toplulugu-181717?style=flat-square&logo=github)](https://github.com/Bilgisayar-Kavramlari-Toplulugu/project-n8n-automation)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
-
-**Part of [n8n-automation](docs/Project-Definition.md)**
-
-</div>
+Bu proje, AWS üzerinde **N8N** ve **Caddy** stack'ini tamamen otomize edilmiş, güvenli ve maliyet odaklı bir şekilde kurmanızı sağlar. Yeni sürümle birlikte yerel kurulumun yanı sıra **GitHub Actions** üzerinden tam otomasyon ve **OIDC (Keyless)** güvenliği eklenmiştir.
 
 ---
 
-<details open>
-<summary><strong>🇹🇷 Türkçe</strong></summary>
-
-<br>
-
-> **ÖNEMLİ:** Bu repository **n8n-automation** projesinin bir parçasıdır. Proje hakkında detaylı bilgi için [`docs/Project-Definition.md`](docs/Project-Definition.md) dosyasına bakın.
-
-## 📖 Hakkında
-
-<!-- Bu repository'nin ne yaptığını buraya yazın -->
-
-## 🚀 Kurulum
-
-### Gereksinimler
-
-- Gerekli araçları buraya listeleyin
-
-### Başlangıç
-
-```bash
-git clone https://github.com/Bilgisayar-Kavramlari-Toplulugu/project-n8n-automation.git
-cd project-n8n-automation
-
-# Kurulum adımlarını buraya ekleyin
-```
-
-## 💻 Kullanım
-
-```bash
-# Uygulamayı çalıştırma komutunu buraya ekleyin
-```
-
-## 📁 Proje Yapısı
+## 📁 Yeni Proje Yapısı
 
 ```
-project-n8n-automation/
-├── src/          # Kaynak kodlar
-├── tests/        # Testler
-├── docs/         # Dokümantasyon
-└── README.md     # Bu dosya
+local-terraform/
+├── bootstrap/           # Bir kerelik çalıştırılan S3 State + OIDC kurulumu
+├── .github/workflows/   # GitHub Actions otomasyon dosyaları (CI/CD)
+├── scripts/             # Modüler kurulum scriptleri
+│   ├── 00-setup-swap.sh # RAM optimizasyonu (2GB Swap)
+│   ├── 01-install-docker.sh
+│   ├── 02-deploy-stack.sh
+│   └── 03-security-hardening.sh # UFW, Fail2Ban, SSH Hardening
+├── main.tf              # Ana altyapı (Spot Instance, OIDC entegrasyonu)
+├── variables.tf         # t3.small, Spot Instance ve SSH Key ayarları
+└── outputs.tf           # Dinamik IP ve SSH komutları
 ```
-
-## 🧪 Test
-
-```bash
-# Test komutlarını buraya ekleyin
-```
-
-## 🤝 Katkıda Bulunma
-
-Katkıda bulunmak için lütfen [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) dosyasını inceleyin.
-
-## 📚 Dokümantasyon
-
-- [Proje Tanımı](docs/Project-Definition.md)
-- [Mimari Genel Bakış](docs/Architecture-Overview.md)
-- [Geliştirme Akışı](docs/Development-Workflow.md)
-
-## 📄 Lisans
-
-Bu proje MIT Lisansı ile lisanslanmıştır - detaylar için [LICENSE](LICENSE) dosyasına bakın.
 
 ---
 
-**Proje Lideri:** [@slymanmrcan](https://github.com/slymanmrcan)
+## 🚀 Öne Çıkan Özellikler
 
-</details>
-
-<details>
-<summary><strong>🇬🇧 English</strong></summary>
-
-<br>
-
-> **IMPORTANT:** This repository is part of **n8n-automation** project. See [`docs/Project-Definition.md`](docs/Project-Definition.md) for details.
-
-## 📖 About
-
-<!-- Describe what this repository does -->
-
-## 🚀 Installation
-
-### Requirements
-
-- List required tools here
-
-### Getting Started
-
-```bash
-git clone https://github.com/Bilgisayar-Kavramlari-Toplulugu/project-n8n-automation.git
-cd project-n8n-automation
-
-# Add installation steps here
-```
-
-## 💻 Usage
-
-```bash
-# Add command to run the application
-```
-
-## 📁 Project Structure
-
-```
-project-n8n-automation/
-├── src/          # Source code
-├── tests/        # Tests
-├── docs/         # Documentation
-└── README.md     # This file
-```
-
-## 🧪 Testing
-
-```bash
-# Add test commands here
-```
-
-## 🤝 Contributing
-
-Please see [`CONTRIBUTING.md`](.github/CONTRIBUTING.md) for contribution guidelines.
-
-## 📚 Documentation
-
-- [Project Definition](docs/Project-Definition.md)
-- [Architecture Overview](docs/Architecture-Overview.md)
-- [Development Workflow](docs/Development-Workflow.md)
-
-## 📄 License
-
-This project is licensed under the MIT License - see [LICENSE](LICENSE) file for details.
+- **GitHub Actions Entegrasyonu:** Kodunuzu pushladığınızda otomatik `apply`, PR açtığınızda `plan`.
+- **Sıfır Key Güvenliği (OIDC):** GitHub Secrets'te AWS Access Key saklamanıza gerek yok. IAM Role geçici izinlerle çalışır.
+- **Maliyet Odaklı (Spot + No Elastic IP):** Spot Instance kullanarak %70 tasarruf sağlanır. Elastic IP maliyetinden kaçınmak için Dinamik IP kullanılır.
+- **Güvenlik (Hardening):** fail2ban, UFW, SSH parola girişinin kapatılması ve N8N'in yalnızca Caddy arkasından yayınlanması otomatik yapılır.
+- **Performans:** 1GB RAM'li makinelerde donmayı engellemek için 2GB otomatik Swap alanı.
 
 ---
 
-**Project Lead:** [@slymanmrcan](https://github.com/slymanmrcan)
+## 🛠️ Kurulum ve Devreye Alma
 
-</details>
+### 1. Hazırlık (Bootstrap)
+Terraform state dosyalarını bulutta saklamak ve GitHub'a izin vermek için bir kez yerelinizde çalıştırın:
+```bash
+cd bootstrap
+# github_repo için repo hazir degilse gecici olarak "ORG/*" kullanabilirsiniz.
+# Repo olusunca bunu mutlaka "ORG/REPO" seviyesine daraltin.
+terraform init
+terraform apply
+```
+*Çıktıdaki `github_role_arn` değerini GitHub Secrets'a ekleyeceksiniz.*
+
+### 2. State Migration
+Yarattığınız S3 bucket'ını kullanmaya başlamak için ana dizinde:
+```bash
+terraform init -migrate-state -reconfigure
+```
+
+## 🔐 AWS Console: Manuel Yapılması Gerekenler
+
+Bootstrap aşamasında veya sonrasında bazı işlemleri AWS Console üzerinden yapmanız gerekebilir. Özellike `AccessDenied` hatası alıyorsanız buraya dikkat:
+
+### 1. IAM Kullanıcı Yetkilerini Düzeltme (Least Privilege)
+Eğer `bootstrap` klasöründe `terraform apply` yaparken **"AccessDenied"** hatası alıyorsanız, elinizdeki yerel anahtarların IAM kaynağı yaratma yetkisi yok demektir. Güvenlik gereği Admin yetkisi vermek yerine, sadece şu dar kapsamlı **"Bootstrap Policy"** JSON'ını kullanıcınıza (Inline Policy olarak) ekleyin:
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "saml:CreateOpenIDConnectProvider",
+                "iam:CreateOpenIDConnectProvider",
+                "iam:GetOpenIDConnectProvider",
+                "iam:DeleteOpenIDConnectProvider",
+                "iam:CreateRole",
+                "iam:GetRole",
+                "iam:DeleteRole",
+                "iam:PutRolePolicy",
+                "iam:GetRolePolicy",
+                "iam:DeleteRolePolicy",
+                "s3:CreateBucket",
+                "s3:PutBucketVersioning",
+                "s3:GetBucket*",
+                "s3:ListBucket",
+                "dynamodb:CreateTable",
+                "dynamodb:DescribeTable",
+                "dynamodb:DeleteTable"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+**NOT:** Bootstrap bittikten sonra bu yerel kullanıcıyı silebilir veya anahtarlarını deaktive edebilirsiniz. Artık her şey OIDC üzerinden (anahtarsız) GitHub tarafından yönetilecek.
+
+### 2. OIDC Rolünü ve ARN'ı Bulma
+Bootstrap bittikten sonra GitHub Action'a vermeniz gereken `ROLE_ARN` bilgisini kaybetmediyseniz:
+1.  **IAM** > **Roles** kısmına gidin.
+2.  `GitHubTerraformExecutionRole` isimli rolü arayın.
+3.  Rolün içine girince en üstte yazan **ARN** değerini kopyalayıp GitHub Secrets'a (Adım 3) ekleyin.
+
+### 3. GitHub Secrets
+GitHub reponuzun ayarlarına şu secret'ları ekleyin:
+- `AWS_ROLE_ARN`: Bootstrap çıktısındaki Role ARN.
+- `N8N_PASSWORD`: N8N basic auth için güçlü bir parola.
+- `SSH_PUBLIC_KEY`: Opsiyonel. Makineye SSH ile bağlanmak istiyorsanız public key içeriği.
+- `SSH_ALLOWED_CIDRS`: Opsiyonel. JSON dizi formatında CIDR listesi. Örn: `["85.105.10.20/32"]`
+
+SSH erişimi varsayılan olarak kapalıdır. `SSH_PUBLIC_KEY` ve `SSH_ALLOWED_CIDRS` birlikte verilirse yalnızca belirttiğiniz IP'lere açılır.
+
+`github_repo = "ORG/*"` geçici olarak çalışır; ancak bu durumda ilgili role'i assume edebilen kapsam tek repo değil organizasyondaki tüm uygun repolar olur. Repo hazır olduğunda bunu `ORG/REPO` seviyesine daraltın.
+
+---
+
+## 🔄 Otomasyon Akışı
+
+1. **Pull Request:** Herhangi bir branştan `main`'e PR açtığınızda `terraform plan` çalışır ve sonuç PR altına yorum olarak yazılır.
+2. **Merge (Push to Main):** Kod `main` branşında birleştiği an `terraform apply` tetiklenir ve sunucu güncellenir.
+3. **Manual Destroy:** İhtiyaç duyduğunuzda GitHub Actions panelinden "Terraform Destroy" workflow'unu manuel çalıştırarak her şeyi silebilirsiniz.
+
+---
+
+## 🏗️ Altyapı Detayları
+
+| Özellik | Detay |
+|---------|-------|
+| **Bölge** | `eu-central-1` (Frankfurt) |
+| **Instance** | `t3.small` (Önerilen) |
+| **Market** | Spot (Persistent / Stop behavior) |
+| **İşletim Sistemi** | Ubuntu 22.04 LTS |
+| **Güvenlik** | OIDC, UFW, fail2ban, Caddy-only N8N exposure |
+
+### 🔒 Açık Portlar
+- **22 (SSH):** Varsayılan olarak kapalıdır; yalnızca `ssh_allowed_cidrs` tanımlanırsa açılır.
+- **80/443 (Web):** Caddy Reverse Proxy.
+
+---
+
+## 💰 Maliyet Tahmini (Spot + t3.small)
+
+- **t3.small (Spot):** ~$4-6 / ay (Normal fiyatın ~%70 altı)
+- **S3 & DynamoDB:** ~$0.01 / ay (Yalnızca kullanım kadar)
+- **Elastic IP:** $0 (Kullanılmıyor, Dinamik IP tercih edildi)
+- **Toplam Tahmini:** **~$5-7 / ay** (Performanslı n8n için en ucuz çözüm)
+
+---
+
+## ❓ Yardım ve Destek
+Sunucuya bağlandığınızda kurulum loglarını şu komutla izleyebilirsiniz:
+`tail -f /var/log/02-deploy-stack.log`
