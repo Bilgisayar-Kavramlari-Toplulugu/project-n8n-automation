@@ -38,12 +38,12 @@ local-terraform/
 Terraform state dosyalarını bulutta saklamak ve GitHub'a izin vermek için bir kez yerelinizde çalıştırın:
 ```bash
 cd bootstrap
-# github_repo için repo hazir degilse gecici olarak "ORG/*" kullanabilirsiniz.
-# Repo olusunca bunu mutlaka "ORG/REPO" seviyesine daraltin.
 terraform init
 terraform apply
 ```
 *Çıktıdaki `github_role_arn` değerini GitHub Secrets'a ekleyeceksiniz.*
+
+Bu repo icin varsayilan `github_repo` degeri zaten `Bilgisayar-Kavramlari-Toplulugu/project-n8n-automation` olarak ayarlidir. Daha once bootstrap'i `ORG/*` veya `Bilgisayar-Kavramlari-Toplulugu/*` ile calistirdiysaniz, trust policy'yi daraltmak icin `bootstrap` klasorunde yeniden `terraform apply` calistirin.
 
 ### 2. State Migration
 Yarattığınız S3 bucket'ını kullanmaya başlamak için ana dizinde:
@@ -102,6 +102,8 @@ GitHub reponuzun ayarlarına şu secret'ları ekleyin:
 - `N8N_PASSWORD`: N8N basic auth için güçlü bir parola.
 - `SSH_PUBLIC_KEY`: Opsiyonel. Makineye SSH ile bağlanmak istiyorsanız public key içeriği.
 - `SSH_ALLOWED_CIDRS`: Opsiyonel. JSON dizi formatında CIDR listesi. Örn: `["85.105.10.20/32"]`
+
+Zorunlu olanlar yalnizca `AWS_ROLE_ARN` ve `N8N_PASSWORD` secret'laridir. SSH secret'lari sadece sunucuya SSH erisimi acmak istiyorsaniz gerekir.
 
 SSH erişimi varsayılan olarak kapalıdır. `SSH_PUBLIC_KEY` ve `SSH_ALLOWED_CIDRS` birlikte verilirse yalnızca belirttiğiniz IP'lere açılır.
 
