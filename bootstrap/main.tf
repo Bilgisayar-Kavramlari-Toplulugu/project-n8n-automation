@@ -1,7 +1,7 @@
 variable "github_repo" {
   description = "GitHub repository scope. Repo hazir degilse gecici olarak 'org/*' kullanabilirsiniz; repo olusunca 'org/repo' seviyesine daraltin."
   type        = string
-  default     = "Bilgisayar-Kavramlari-Toplulugu/*" # Burayı kendi reponuzla güncelleyin!
+  default     = "Bilgisayar-Kavramlari-Toplulugu/project-n8n-automation"
 }
 
 variable "github_default_branch" {
