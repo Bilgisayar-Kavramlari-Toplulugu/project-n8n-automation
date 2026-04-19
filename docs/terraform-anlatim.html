@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terraform Rehberi | AWS n8n + Caddy Projesi</title>
+  <style>
+    :root {
+      --bg: #f6f2ea;
+      --bg-soft: #fbf8f3;
+      --paper: #fffdf9;
+      --ink: #18272f;
+      --ink-soft: #52626d;
+      --line: rgba(24, 39, 47, 0.1);
+      --line-strong: rgba(24, 39, 47, 0.18);
+      --accent: #1a6b75;
+      --accent-soft: rgba(26, 107, 117, 0.1);
+      --warm: #b57a47;
+      --warm-soft: rgba(181, 122, 71, 0.12);
+      --shadow: 0 24px 60px rgba(25, 35, 40, 0.08);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --max: 1340px;
+      --toc: 270px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Avenir Next", "Segoe UI Variable Text", "Helvetica Neue", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(26, 107, 117, 0.06), transparent 24%),
+        radial-gradient(circle at top right, rgba(181, 122, 71, 0.08), transparent 18%),
+        linear-gradient(180deg, #f7f4ee 0%, #f5f1ea 100%);
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    code,
+    pre {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    .progress {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 50;
+      height: 4px;
+      background: rgba(24, 39, 47, 0.04);
+    }
+
+    .progress span {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--warm));
+    }
+
+    .shell {
+      width: min(calc(100% - 28px), var(--max));
+      margin: 0 auto;
+      padding: 18px 0 56px;
+      display: grid;
+      grid-template-columns: var(--toc) minmax(0, 1fr);
+      gap: 24px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 18px;
+      align-self: start;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      background: rgba(255, 253, 249, 0.82);
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .toc small,
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      width: fit-content;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(24, 39, 47, 0.05);
+      color: var(--ink-soft);
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .toc h1,
+    .hero-copy h2,
+    .section-head h2,
+    .tab-panel h3,
+    .note-panel h3,
+    .faq summary {
+      margin: 0;
+      font-family: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+      letter-spacing: -0.03em;
+      line-height: 0.97;
+    }
+
+    .toc h1 {
+      margin-top: 16px;
+      font-size: clamp(2.4rem, 4vw, 3.6rem);
+      max-width: 8ch;
+    }
+
+    .toc p,
+    .section-head p,
+    .card p,
+    .metric p,
+    .compare p,
+    .compare li,
+    .flow-card p,
+    .stage-card p,
+    .stage-item span,
+    .tab-panel p,
+    .tab-panel li,
+    .folder-card p,
+    .timeline-step p,
+    .decision-card p,
+    .note-panel p,
+    .note-panel li,
+    .faq p,
+    .footer {
+      margin: 0;
+      color: var(--ink-soft);
+      line-height: 1.75;
+    }
+
+    .toc p {
+      margin-top: 14px;
+      font-size: 0.96rem;
+    }
+
+    .toc-stats {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .toc-stat {
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: rgba(24, 39, 47, 0.04);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .toc-stat strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.28rem;
+      line-height: 1;
+    }
+
+    .toc-stat span {
+      display: block;
+      color: var(--ink-soft);
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .toc-links {
+      display: grid;
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    .toc-links a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: var(--ink-soft);
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+      font-size: 0.94rem;
+    }
+
+    .toc-links a span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(24, 39, 47, 0.06);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .toc-links a:hover,
+    .toc-links a.active {
+      background: var(--accent-soft);
+      color: var(--ink);
+      transform: translateX(2px);
+    }
+
+    .toc-note {
+      margin-top: 18px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      font-size: 0.9rem;
+    }
+
+    .content {
+      display: grid;
+      gap: 18px;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(22px, 3vw, 34px);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 249, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+      background:
+        linear-gradient(135deg, rgba(255, 253, 249, 0.98), rgba(248, 244, 237, 0.95));
+    }
+
+    .hero-copy {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .hero-copy h2 {
+      font-size: clamp(3rem, 6vw, 5rem);
+      max-width: 11ch;
+    }
+
+    .hero-lead {
+      margin: 0;
+      max-width: 64ch;
+      color: var(--ink-soft);
+      line-height: 1.85;
+      font-size: 1.05rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .hero-actions a {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-weight: 800;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .hero-actions a.primary {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .hero-actions a.secondary {
+      background: rgba(24, 39, 47, 0.06);
+      color: var(--ink);
+    }
+
+    .hero-actions a:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(24, 39, 47, 0.12);
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(24, 39, 47, 0.04);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .metric strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1.32rem;
+      line-height: 1;
+    }
+
+    .hero-map {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .map-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(24, 39, 47, 0.08);
+      background: rgba(24, 39, 47, 0.04);
+    }
+
+    .map-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .map-card p {
+      margin: 0;
+      color: var(--ink-soft);
+      line-height: 1.7;
+    }
+
+    .map-card.accent {
+      background: var(--accent-soft);
+      border-color: rgba(26, 107, 117, 0.14);
+    }
+
+    .map-card.warm {
+      background: var(--warm-soft);
+      border-color: rgba(181, 122, 71, 0.16);
+    }
+
+    .section-head {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2 {
+      max-width: 13ch;
+      font-size: clamp(2rem, 4vw, 3.6rem);
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid-4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .grid-1 {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card,
+    .compare,
+    .flow-card,
+    .stage-card,
+    .folder-card,
+    .decision-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: rgba(24, 39, 47, 0.04);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .card strong,
+    .flow-card strong,
+    .stage-item strong,
+    .folder-card strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1.02rem;
+      line-height: 1.3;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .compare h3,
+    .stage-card h3,
+    .decision-card h3 {
+      margin: 0 0 12px;
+      font-size: 1.35rem;
+      line-height: 1.15;
+      font-family: "Avenir Next", "Segoe UI Variable Text", sans-serif;
+    }
+
+    .compare ul,
+    .tab-panel ul,
+    .note-panel ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 4px;
+    }
+
+    .command-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .command {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .command strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .command p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.76);
+      line-height: 1.65;
+    }
+
+    .provider-flow {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .provider-step {
+      min-height: 122px;
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: rgba(24, 39, 47, 0.05);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .provider-step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .provider-step span {
+      display: block;
+      color: var(--ink-soft);
+      line-height: 1.65;
+      font-size: 0.92rem;
+    }
+
+    .provider-arrow {
+      text-align: center;
+      color: var(--warm);
+      font-size: 1.45rem;
+      font-weight: 900;
+    }
+
+    .stage-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stage-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .stage-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(24, 39, 47, 0.04);
+    }
+
+    .tabs {
+      display: grid;
+      gap: 16px;
+    }
+
+    .tab-buttons,
+    .note-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tab-button,
+    .note-button {
+      appearance: none;
+      border: 0;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(24, 39, 47, 0.06);
+      color: var(--ink-soft);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+    }
+
+    .tab-button:hover,
+    .tab-button.active,
+    .note-button:hover,
+    .note-button.active {
+      background: var(--ink);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+
+    .tab-panel,
+    .note-panel {
+      display: none;
+      padding: 22px;
+      border-radius: var(--radius-lg);
+      background: rgba(24, 39, 47, 0.04);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .tab-panel.active,
+    .note-panel.active {
+      display: block;
+    }
+
+    .tab-panel h3,
+    .note-panel h3 {
+      margin-bottom: 12px;
+      font-size: 2rem;
+    }
+
+    .snippet {
+      margin-top: 16px;
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: #13252d;
+      color: #eef3f4;
+      overflow: auto;
+    }
+
+    .snippet code {
+      display: block;
+      padding: 0;
+      background: none;
+      color: inherit;
+      white-space: pre;
+      line-height: 1.7;
+    }
+
+    .structure-grid {
+      display: grid;
+      grid-template-columns: 1.08fr 0.92fr;
+      gap: 14px;
+    }
+
+    .tree {
+      padding: 20px;
+      border-radius: var(--radius-lg);
+      background: #13252d;
+      color: #eef3f4;
+      overflow: auto;
+    }
+
+    .tree code {
+      display: block;
+      white-space: pre;
+      line-height: 1.8;
+      font-size: 0.95rem;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-step {
+      position: relative;
+      padding: 18px 18px 18px 56px;
+      border-radius: var(--radius-lg);
+      background: rgba(24, 39, 47, 0.04);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .timeline-step::before {
+      content: "";
+      position: absolute;
+      left: 20px;
+      top: 22px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 6px rgba(26, 107, 117, 0.12);
+    }
+
+    .timeline-step strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .decision-card.accent {
+      background: var(--accent-soft);
+      border-color: rgba(26, 107, 117, 0.14);
+    }
+
+    .decision-card.warm {
+      background: var(--warm-soft);
+      border-color: rgba(181, 122, 71, 0.16);
+    }
+
+    .faq {
+      display: grid;
+      gap: 12px;
+    }
+
+    .faq details {
+      padding: 18px 20px;
+      border-radius: var(--radius-lg);
+      background: rgba(24, 39, 47, 0.04);
+      border: 1px solid rgba(24, 39, 47, 0.06);
+    }
+
+    .faq summary {
+      cursor: pointer;
+      list-style: none;
+      font-size: 1.4rem;
+    }
+
+    .faq summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq p {
+      margin-top: 12px;
+    }
+
+    .footer {
+      padding: 18px 22px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--line);
+      background: rgba(255, 253, 249, 0.9);
+      text-align: center;
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 1180px) {
+      .shell {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: relative;
+        top: 0;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .grid-4,
+      .grid-3,
+      .grid-2,
+      .compare-grid,
+      .stage-grid,
+      .structure-grid,
+      .decision-grid,
+      .hero-metrics,
+      .command-grid,
+      .provider-flow {
+        grid-template-columns: 1fr;
+      }
+
+      .provider-arrow {
+        transform: rotate(90deg);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .shell {
+        width: min(calc(100% - 14px), 100%);
+      }
+
+      .timeline-step {
+        padding-left: 18px;
+        padding-top: 54px;
+      }
+
+      .timeline-step::before {
+        left: 18px;
+        top: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="progress"><span id="progress-bar"></span></div>
+
+  <div class="shell">
+    <aside class="toc">
+      <small>Terraform proje anlatimi</small>
+      <h1>Terraform nedir?</h1>
+      <p>
+        Bu sayfa Terraform'u teoriden anlatip gecmek yerine, bu repo uzerinden nasil calistigini
+        duzgun bir akista gostermek icin hazirlandi.
+      </p>
+
+      <div class="toc-stats">
+        <div class="toc-stat">
+          <strong>1</strong>
+          <span>Provider: AWS</span>
+        </div>
+        <div class="toc-stat">
+          <strong>2</strong>
+          <span>Katman: bootstrap + runtime</span>
+        </div>
+        <div class="toc-stat">
+          <strong>4</strong>
+          <span>Boot script</span>
+        </div>
+        <div class="toc-stat">
+          <strong>3</strong>
+          <span>CI/CD workflow</span>
+        </div>
+      </div>
+
+      <nav class="toc-links" aria-label="Sayfa bolumleri">
+        <a href="#basics"><span>01</span>Temel mantik</a>
+        <a href="#concepts"><span>02</span>Kavramlar</a>
+        <a href="#files"><span>03</span>Temel dosyalar</a>
+        <a href="#provider"><span>04</span>Provider mantigi</a>
+        <a href="#project-overview"><span>05</span>Proje ne kuruyor?</a>
+        <a href="#project-files"><span>06</span>Dosya dosya analiz</a>
+        <a href="#structure"><span>07</span>Klasor yapisi</a>
+        <a href="#flow"><span>08</span>Deploy akis</a>
+        <a href="#decisions"><span>09</span>Kararlar</a>
+        <a href="#talk-track"><span>10</span>Sunum notu</a>
+        <a href="#faq"><span>11</span>SSS</a>
+      </nav>
+
+      <div class="toc-note">
+        Kisa ozet: Terraform, "sunucu ac" araci degil; "hedef sistemi tarif et, farki hesapla,
+        kontrollu kur" araci.
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="panel hero reveal visible">
+        <div class="hero-copy">
+          <div class="eyebrow">AWS / Terraform / n8n / Caddy</div>
+          <h2>Terraform'u bu proje uzerinden oku.</h2>
+          <p class="hero-lead">
+            Bu repo AWS uzerinde <code>n8n + Caddy</code> calistiran bir Terraform kurgusu.
+            Ama burada asil konu sadece "ne deploy ediyor?" degil. Provider ne ise yarar,
+            state neden onemlidir, dosyalar niye bu sekilde bolunur ve bu proje bunu nasil temiz
+            bir operasyon akisina cevirir, onu goreceksin.
+          </p>
+
+          <div class="hero-actions">
+            <a class="primary" href="#basics">Temel mantigi oku</a>
+            <a class="secondary" href="#talk-track">Hazir sunum notasina git</a>
+          </div>
+
+          <div class="hero-metrics">
+            <div class="metric">
+              <strong>AWS</strong>
+              <p>VPC, subnet, route table, security group ve EC2 Terraform ile kuruluyor.</p>
+            </div>
+            <div class="metric">
+              <strong>Bootstrap</strong>
+              <p>S3 state, DynamoDB lock ve GitHub OIDC ayri katmanda hazirlaniyor.</p>
+            </div>
+            <div class="metric">
+              <strong>Docker</strong>
+              <p>Sunucu ilk acildiginda Caddy ve n8n stack'i otomatik ayaga kalkiyor.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-map">
+          <div class="map-card accent">
+            <strong>Katman 1: Bootstrap</strong>
+            <p>S3 state bucket, DynamoDB lock, OIDC provider ve GitHub IAM role burada kuruluyor.</p>
+          </div>
+          <div class="map-card">
+            <strong>Katman 2: Main Terraform</strong>
+            <p>VPC, public subnet, internet gateway, route table, security group ve EC2 burada tanimlaniyor.</p>
+          </div>
+          <div class="map-card warm">
+            <strong>Katman 3: user_data</strong>
+            <p>Swap, Docker, Compose, Caddy, n8n ve hardening scriptleri ilk boot aninda calisiyor.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="basics" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">1. Temel mantik</div>
+          <h2>Terraform neyi degistiriyor?</h2>
+          <p>
+            Altyapiyi panelden yonetmek yerine dosyadan tarif ediyorsun. Terraform da mevcut durumla
+            istedigin durum arasindaki farki hesaplayip ne yaratacagini, neyi guncelleyecegini ya da
+            neyi silecegini belirliyor.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <strong>Bir cumlede</strong>
+            <p>Terraform, altyapinin kod halidir.</p>
+          </div>
+          <div class="card">
+            <strong>Neden onemli?</strong>
+            <p>Ayni sistemi tekrar tekrar ayni sekilde kurabilirsin.</p>
+          </div>
+          <div class="card">
+            <strong>Asil guc</strong>
+            <p>Degisikligi uygulamadan once plan gosterir, sonra kontrollu uygular.</p>
+          </div>
+        </div>
+
+        <div class="compare-grid">
+          <div class="compare">
+            <h3>Terraform olmadan</h3>
+            <ul>
+              <li>AWS panelinde kaynaklar tek tek acilir.</li>
+              <li>Kim neyi neden acti zamanla belirsizlesir.</li>
+              <li>Tekrar kurulum zorlasir.</li>
+              <li>Ekipte farkli kurulum aliskanliklari dogar.</li>
+              <li>Silme ve guncelleme riski artar.</li>
+            </ul>
+          </div>
+
+          <div class="compare">
+            <h3>Terraform ile</h3>
+            <ul>
+              <li>Altyapi okunabilir dosyalarla tanimlanir.</li>
+              <li>Degisiklikten once plan gorulur.</li>
+              <li>Kaynak iliskileri otomatik cozulur.</li>
+              <li>Versiyon kontrolu ile altyapi tarihi tutulur.</li>
+              <li>Tekrar kurulum ve denetim kolaylasir.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="command-grid">
+          <div class="command">
+            <strong><code>terraform init</code></strong>
+            <p>Provider ve backend ayarlarini hazirlar.</p>
+          </div>
+          <div class="command">
+            <strong><code>terraform plan</code></strong>
+            <p>Ne degisecegini gosterir.</p>
+          </div>
+          <div class="command">
+            <strong><code>terraform apply</code></strong>
+            <p>Planlanan degisikligi uygular.</p>
+          </div>
+          <div class="command">
+            <strong><code>terraform destroy</code></strong>
+            <p>Terraform'un actigi kaynaklari kontrollu siler.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="concepts" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">2. Cekirdek kavramlar</div>
+          <h2>Bir repo okurken bilmen gereken taslar</h2>
+          <p>
+            Bu kavramlar oturdugunda Terraform dosyalari cok daha temiz okunur.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <strong>Provider</strong>
+            <p>Terraform'un bir platformla konusma eklentisi. Bu repoda <code>aws</code> var.</p>
+          </div>
+          <div class="card">
+            <strong>Resource</strong>
+            <p>Olusturulacak somut nesne. Ornek: <code>aws_vpc</code>, <code>aws_instance</code>.</p>
+          </div>
+          <div class="card">
+            <strong>Variable</strong>
+            <p>Disaridan ayar vermeni saglar. Region, instance tipi, parola gibi.</p>
+          </div>
+          <div class="card">
+            <strong>Output</strong>
+            <p>Apply bittikten sonra gormen gereken sonucu dondurur.</p>
+          </div>
+          <div class="card">
+            <strong>Data Source</strong>
+            <p>Yeni kaynak yaratmaz, mevcut bilgiyi okur. Bu repoda Ubuntu AMI buradan geliyor.</p>
+          </div>
+          <div class="card">
+            <strong>State</strong>
+            <p>Terraform'un hafizasi. Hangi kaynagi hangi ID ile yonettigini bilir.</p>
+          </div>
+          <div class="card">
+            <strong>Backend</strong>
+            <p>State'in nereye yazilacagini belirler. Bu projede lokal degil, S3 tabanli.</p>
+          </div>
+          <div class="card">
+            <strong>Dependency</strong>
+            <p>Kaynaklarin birbirine bagimliligi. Ornek: subnet, VPC'ye baglidir.</p>
+          </div>
+          <div class="card">
+            <strong>Desired State</strong>
+            <p>Terraform'un omurgasi: kodda ne istiyorsan, onu mevcut durumla karsilastirir.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="files" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">3. Temel dosyalar</div>
+          <h2>Basit bir Terraform projesi hangi dosyalari barindirir?</h2>
+          <p>
+            Her repoda ayni dizilim olmayabilir ama roller benzerdir.
+          </p>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <strong><code>main.tf</code></strong>
+            <p>Ana kaynaklarin omurgasi burada olur.</p>
+          </div>
+          <div class="card">
+            <strong><code>variables.tf</code></strong>
+            <p>Ayarlanabilir kisimlar burada tanimlanir.</p>
+          </div>
+          <div class="card">
+            <strong><code>outputs.tf</code></strong>
+            <p>Kurulum bittiginde disari verilmesi gereken degerleri tutar.</p>
+          </div>
+          <div class="card">
+            <strong><code>provider.tf</code> / <code>versions.tf</code></strong>
+            <p>Provider secimi ve versiyon sinirlari bu dosyalara ayrilabilir.</p>
+          </div>
+          <div class="card">
+            <strong><code>terraform.tfvars</code></strong>
+            <p>Variable degerlerini ayri dosyadan vermek icin kullanilir.</p>
+          </div>
+          <div class="card">
+            <strong><code>modules/</code></strong>
+            <p>Proje buyudukce tekrar eden yapilar modullere tasinir.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="provider" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">4. Provider mantigi</div>
+          <h2>Provider ne ise yarar?</h2>
+          <p>
+            Provider, Terraform ile bulut saglayicisi arasindaki koprudur.
+          </p>
+        </div>
+
+        <div class="provider-flow">
+          <div class="provider-step">
+            <strong>Terraform Core</strong>
+            <span>Yazdigini okur, bagimliliklari cozer, plan cikarir.</span>
+          </div>
+          <div class="provider-arrow">&rarr;</div>
+          <div class="provider-step">
+            <strong>AWS Provider</strong>
+            <span><code>hashicorp/aws</code> bloklarini AWS API cagrilarina cevirir.</span>
+          </div>
+          <div class="provider-arrow">&rarr;</div>
+          <div class="provider-step">
+            <strong>AWS API</strong>
+            <span>Gercek kaynaklar burada acilir.</span>
+          </div>
+        </div>
+
+        <div class="stage-grid">
+          <div class="stage-card">
+            <h3>Bu projede provider katmani</h3>
+            <p>
+              <code>required_providers</code> ile <code>hashicorp/aws ~&gt; 5.0</code> seciliyor.
+              Sonra <code>provider "aws" { region = var.region }</code> ile hedef bolge belirleniyor.
+            </p>
+            <div class="stage-list">
+              <div class="stage-item">
+                <strong><code>required_providers</code></strong>
+                <span>Hangi provider ve surum ailesi kullanilacak?</span>
+              </div>
+              <div class="stage-item">
+                <strong><code>provider "aws"</code></strong>
+                <span>Provider hangi region uzerinden calisacak?</span>
+              </div>
+              <div class="stage-item">
+                <strong><code>data "aws_ami"</code></strong>
+                <span>Var olan bilgiyi okur: en guncel Ubuntu 22.04 AMI.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stage-card">
+            <h3>Sunumda tek cumle</h3>
+            <p>
+              "Terraform kendi basina AWS'i tanimaz. AWS provider'i, yazdigim HCL'i AWS'in anlayacagi
+              isteklere cevirir. Yani provider, Terraform icin bir tercumandir."
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="project-overview" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">5. Proje ne kuruyor?</div>
+          <h2>Repoyu iki katmanli oku</h2>
+          <p>
+            Bu repo sadece EC2 acip icine Docker kurmuyor. Once operasyon zeminini, sonra runtime katmanini kuruyor.
+          </p>
+        </div>
+
+        <div class="stage-grid">
+          <div class="stage-card">
+            <h3>Katman 1: Bootstrap</h3>
+            <p><code>bootstrap/main.tf</code> ana stack'ten once gereken zemini hazirlar.</p>
+            <div class="stage-list">
+              <div class="stage-item">
+                <strong>S3 bucket</strong>
+                <span>State dosyasini merkezi ve kalici yerde tutar.</span>
+              </div>
+              <div class="stage-item">
+                <strong>DynamoDB table</strong>
+                <span>State locking mekanizmasini saglar.</span>
+              </div>
+              <div class="stage-item">
+                <strong>GitHub OIDC provider</strong>
+                <span>Keyless kimlik baglantisi kurar.</span>
+              </div>
+              <div class="stage-item">
+                <strong>IAM role + policy</strong>
+                <span>GitHub'un Terraform'u hangi yetkiyle calistiracagini belirler.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="stage-card">
+            <h3>Katman 2: Runtime stack</h3>
+            <p>Repo kokundeki <code>main.tf</code>, asil altyapiyi ve boot akisini kurar.</p>
+            <div class="stage-list">
+              <div class="stage-item">
+                <strong>VPC + subnet + route</strong>
+                <span>Sunucunun internete cikabilecegi ag omurgasi.</span>
+              </div>
+              <div class="stage-item">
+                <strong>Security group</strong>
+                <span>80 ve 443 acik, SSH ise varsayilan olarak kapali.</span>
+              </div>
+              <div class="stage-item">
+                <strong>EC2 instance</strong>
+                <span>Ubuntu 22.04 tabanli runtime.</span>
+              </div>
+              <div class="stage-item">
+                <strong>user_data</strong>
+                <span>Swap, Docker, Caddy, n8n ve hardening burada devreye girer.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="project-files" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">6. Dosya dosya analiz</div>
+          <h2>Bu repodaki kritik dosyalar ne yapiyor?</h2>
+          <p>
+            Burasi teknik anlatinin en guclu bolumu. Dosya isimleri uzerinden akisi okuyorsun.
+          </p>
+        </div>
+
+        <div class="tabs">
+          <div class="tab-buttons" role="tablist" aria-label="Proje dosyalari">
+            <button class="tab-button active" data-tab="main">main.tf</button>
+            <button class="tab-button" data-tab="variables">variables.tf</button>
+            <button class="tab-button" data-tab="outputs">outputs.tf</button>
+            <button class="tab-button" data-tab="bootstrap">bootstrap/main.tf</button>
+            <button class="tab-button" data-tab="scripts">scripts/</button>
+            <button class="tab-button" data-tab="workflows">.github/workflows</button>
+          </div>
+
+          <div class="tab-panel active" data-panel="main">
+            <h3><code>main.tf</code></h3>
+            <p>
+              Projenin runtime omurgasi burada. Provider, S3 backend, ag kaynaklari, security group,
+              key pair, AMI secimi ve EC2 orkestrasyonu ayni akista tutuluyor.
+            </p>
+            <ul>
+              <li><code>backend "s3"</code> ile state'in S3'te duracagi soyleniyor.</li>
+              <li><code>aws_vpc</code>, <code>aws_subnet</code>, <code>aws_internet_gateway</code> ag zeminini kuruyor.</li>
+              <li><code>aws_security_group</code> HTTP/HTTPS aciyor, SSH'i CIDR bazli kontrol ediyor.</li>
+              <li><code>data "aws_ami" "ubuntu"</code> en guncel Ubuntu 22.04 imajini buluyor.</li>
+              <li><code>aws_instance</code> ilk boot aninda <code>user_data</code> calistiriyor.</li>
+              <li><code>user_data_replace_on_change = true</code> ile script degisirse instance yeniden alinabiliyor.</li>
+            </ul>
+            <div class="snippet">
+              <code>resource "aws_instance" "app_server" {
+  ami                         = data.aws_ami.ubuntu.id
+  instance_type               = var.instance_type
+  user_data_replace_on_change = true
+  user_data                   = join("\n", [...scripts...])
+}</code>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="variables">
+            <h3><code>variables.tf</code></h3>
+            <p>Runtime tarafini sabit kalip olmaktan cikarir. Maliyet, guvenlik ve davranis ayarlari burada yasiyor.</p>
+            <ul>
+              <li><code>region</code> hedef AWS bolgesini belirler.</li>
+              <li><code>instance_type</code> maliyet ve performans dengesini tasir.</li>
+              <li><code>use_spot_instance</code> ile spot mode acilir.</li>
+              <li><code>n8n_password</code> sensitive tanimli ve validasyonla korunuyor.</li>
+              <li><code>ssh_allowed_cidrs</code> ve <code>ssh_public_key</code> birlikte verilirse SSH aciliyor.</li>
+              <li><code>public_key_path</code> tanimli ama mevcut akista kullanilmiyor.</li>
+            </ul>
+            <div class="snippet">
+              <code>variable "n8n_password" {
+  type      = string
+  sensitive = true
+
+  validation {
+    condition     = length(trimspace(var.n8n_password)) &gt;= 12
+    error_message = "Guclu parola zorunlu."
+  }
+}</code>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="outputs">
+            <h3><code>outputs.tf</code></h3>
+            <p>Apply bittiginde sonucu okunur hale getirir.</p>
+            <ul>
+              <li><code>public_ip</code> ile dis IP gorunur.</li>
+              <li><code>n8n_web_ui</code> ile gidilecek adres yazilir.</li>
+              <li><code>ssh_command</code> ile SSH acik mi kapali mi net gorunur.</li>
+              <li><code>caddy_status</code> ile reverse proxy durumu ozetlenir.</li>
+            </ul>
+            <div class="snippet">
+              <code>output "n8n_web_ui" {
+  value = "http://${aws_instance.app_server.public_ip}"
+}</code>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="bootstrap">
+            <h3><code>bootstrap/main.tf</code></h3>
+            <p>
+              Bu dosya uygulama stack'ini degil, Terraform'un kendi operasyon omurgasini kuruyor.
+            </p>
+            <ul>
+              <li>S3 bucket ile remote state kuruluyor.</li>
+              <li>DynamoDB ile state locking aciliyor.</li>
+              <li>GitHub OIDC provider tanimlaniyor.</li>
+              <li>GitHub Actions'in assume edecegi IAM role uretiliyor.</li>
+              <li>Execution policy ekleniyor.</li>
+            </ul>
+            <div class="snippet">
+              <code>resource "aws_iam_openid_connect_provider" "github" {
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+}</code>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="scripts">
+            <h3><code>scripts/</code></h3>
+            <p>Terraform sunucuyu yaratir; bu klasor ise sunucunun icini yasar hale getirir.</p>
+            <ul>
+              <li><code>00-setup-swap.sh</code>: 2 GB swap aciyor.</li>
+              <li><code>01-install-docker.sh</code>: Docker ve Compose plugin kuruyor.</li>
+              <li><code>02-deploy-stack.sh</code>: Caddyfile ve docker compose ile n8n stack'ini kaldiriyor.</li>
+              <li><code>03-security-hardening.sh</code>: UFW, fail2ban ve SSH hardening yapiyor.</li>
+              <li>Caddyfile su an net olarak <code>:80</code> uzerinden reverse proxy yapiyor; 443 tarafi domain ve TLS tamamlandiginda anlam kazaniyor.</li>
+            </ul>
+            <div class="snippet">
+              <code>user_data = join("\n", [
+  file("scripts/00-setup-swap.sh"),
+  file("scripts/01-install-docker.sh"),
+  templatefile("scripts/02-deploy-stack.sh", {...}),
+  templatefile("scripts/03-security-hardening.sh", {...})
+])</code>
+            </div>
+          </div>
+
+          <div class="tab-panel" data-panel="workflows">
+            <h3><code>.github/workflows/</code></h3>
+            <p>Plan, deploy ve destroy hatlari GitHub Actions uzerine kurulmus.</p>
+            <ul>
+              <li><code>terraform-ci.yml</code>: PR acildiginda fmt, validate ve plan calisiyor.</li>
+              <li><code>terraform-deploy.yml</code>: <code>main</code> branch'ine push olunca apply yapiliyor.</li>
+              <li><code>terraform-destroy.yml</code>: manuel tetiklenip her seyi kaldirabiliyor.</li>
+              <li>GitHub, AWS'e long-lived key yerine OIDC role ile baglaniyor.</li>
+            </ul>
+            <div class="snippet">
+              <code>on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform-apply:
+    ...
+    - run: terraform apply -auto-approve</code>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="structure" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">7. Klasor yapisi</div>
+          <h2>Repo haritasi</h2>
+          <p>
+            Reponun mantigi iki omurga etrafinda oturuyor: Terraform dosyalari ve boot script zinciri.
+          </p>
+        </div>
+
+        <div class="structure-grid">
+          <div class="tree">
+            <code>local-terraform/
+|-- bootstrap/
+|   `-- main.tf
+|-- .github/
+|   `-- workflows/
+|       |-- terraform-ci.yml
+|       |-- terraform-deploy.yml
+|       `-- terraform-destroy.yml
+|-- docs/
+|   |-- Architecture-Overview.md
+|   |-- Project-Definition.md
+|   `-- terraform-anlatim.html
+|-- scripts/
+|   |-- 00-setup-swap.sh
+|   |-- 01-install-docker.sh
+|   |-- 02-deploy-stack.sh
+|   `-- 03-security-hardening.sh
+|-- main.tf
+|-- variables.tf
+|-- outputs.tf
+|-- README.md
+`-- CUSTOMIZATION.md</code>
+          </div>
+
+          <div class="grid-1">
+            <div class="folder-card">
+              <strong><code>bootstrap/</code></strong>
+              <p>State bucket, lock tablosu ve OIDC burada kuruluyor.</p>
+            </div>
+            <div class="folder-card">
+              <strong><code>scripts/</code></strong>
+              <p>Sunucu ilk acildiginda icerde kosan isler burada.</p>
+            </div>
+            <div class="folder-card">
+              <strong><code>.github/workflows/</code></strong>
+              <p>PR icin plan, main icin apply, gerektiginde manual destroy.</p>
+            </div>
+            <div class="folder-card">
+              <strong><code>docs/ + README</code></strong>
+              <p><code>docs/</code> surec bilgisini, <code>README.md</code> ise teknik hikayenin agirligini tasiyor.</p>
+            </div>
+            <div class="folder-card">
+              <strong><code>main.tf + variables.tf + outputs.tf</code></strong>
+              <p>Runtime cekirdegi burada: ne kurulacak, nasil ayarlanacak, sonuc ne olacak.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="flow" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">8. Deploy akis</div>
+          <h2>Bu proje gercekte nasil calisiyor?</h2>
+          <p>
+            Akis su: once zemin kuruluyor, sonra ana stack apply ediliyor, sonra EC2 ilk boot'ta ic scriptleri kosuyor.
+          </p>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-step">
+            <strong>Bootstrap calisir</strong>
+            <p><code>bootstrap/main.tf</code> ile S3, DynamoDB, OIDC ve IAM role kurulur.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>Ana proje remote state'e baglanir</strong>
+            <p><code>backend "s3"</code> sayesinde state lokalden cikar, merkezi hale gelir.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>PR acilinca plan alinir</strong>
+            <p>GitHub Actions, OIDC ile AWS'e baglanip <code>terraform plan</code> sonucunu uretir.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>Main'e merge olunca apply calisir</strong>
+            <p><code>terraform-deploy.yml</code> ile <code>terraform apply -auto-approve</code> calisir.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>AWS kaynaklari olusur</strong>
+            <p>VPC, subnet, route table, internet gateway, security group, key pair ve EC2 yaratilir.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>EC2 ilk boot'ta user_data kosar</strong>
+            <p>Swap, Docker, docker compose stack ve security hardening scriptleri sirayla calisir.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>Stack canlanir</strong>
+            <p><code>caddy</code> dis trafik girisi olur, <code>n8n</code> arka tarafta calisir.</p>
+          </div>
+          <div class="timeline-step">
+            <strong>Outputs son resmi verir</strong>
+            <p>Public IP, web arayuzu ve SSH durumu <code>terraform output</code> ile gorulur.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="decisions" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">9. Guvenlik ve maliyet</div>
+          <h2>Projede secilen kararlar neden mantikli?</h2>
+          <p>
+            "Ne kuruyor?" sorusu kadar "neden boyle kuruyor?" sorusu da onemli.
+          </p>
+        </div>
+
+        <div class="decision-grid">
+          <div class="decision-card accent">
+            <h3>SSH varsayilan olarak kapali</h3>
+            <p>Yalnizca <code>ssh_public_key</code> ve <code>ssh_allowed_cidrs</code> birlikte verilirse aciliyor.</p>
+          </div>
+          <div class="decision-card">
+            <h3>OIDC ile keyless erisim</h3>
+            <p>GitHub Actions icinde AWS access key tasimak yerine role assume ediliyor.</p>
+          </div>
+          <div class="decision-card">
+            <h3>Spot instance ile maliyet dusuruluyor</h3>
+            <p><code>use_spot_instance = true</code> varsayilani maliyeti asagi cekiyor.</p>
+          </div>
+          <div class="decision-card">
+            <h3>No Elastic IP</h3>
+            <p>Ek maliyetten kacmak icin Elastic IP kapali, public IP dinamik.</p>
+          </div>
+          <div class="decision-card">
+            <h3>Caddy front door gorevi goruyor</h3>
+            <p>n8n dogrudan acilmiyor; web trafigi once Caddy'e geliyor. HTTP net, HTTPS ise domain ve TLS tamamlandiginda gucleniyor.</p>
+          </div>
+          <div class="decision-card">
+            <h3>UFW + fail2ban + SSH hardening</h3>
+            <p>Guvenlik sadece AWS security group'a birakilmamis.</p>
+          </div>
+          <div class="decision-card">
+            <h3>Region ve timezone bilincli secilmis</h3>
+            <p>AWS bolgesi <code>eu-central-1</code>, uygulama timezone'u <code>Europe/Istanbul</code>.</p>
+          </div>
+          <div class="decision-card warm">
+            <h3>Asil deger: operasyon kurgusu</h3>
+            <p>Bu repo sadece sunucu acmiyor; guvenligi, maliyeti ve CI/CD hattini birlikte dusunuyor.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="talk-track" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">10. Sunum notu</div>
+          <h2>Hazir anlatim metni</h2>
+          <p>
+            Kullanima hazir uc seviye anlatim.
+          </p>
+        </div>
+
+        <div class="note-buttons" role="tablist" aria-label="Sunum notlari">
+          <button class="note-button active" data-note="short">60 saniye</button>
+          <button class="note-button" data-note="medium">3 dakika</button>
+          <button class="note-button" data-note="deep">7 dakika</button>
+        </div>
+
+        <div class="note-panel active" data-note-panel="short">
+          <h3>Kisa anlatim</h3>
+          <p>
+            Terraform, altyapiyi kod ile tarif etmeye yarayan bir arac. Bu projede AWS uzerinde n8n ve Caddy
+            calisan bir sistem kuruluyor. Kod tarafinda VPC, subnet, security group ve EC2 tanimlaniyor;
+            sunucu acildiginda scriptler Docker'i ve uygulama stack'ini kuruyor.
+          </p>
+        </div>
+
+        <div class="note-panel" data-note-panel="medium">
+          <h3>Orta detayli anlatim</h3>
+          <p>
+            Terraform'u bir tarif sistemi gibi dusunebiliriz. AWS panelinde tek tek kaynak acmak yerine,
+            kod ile "bir VPC, bir subnet, bir route table, bir security group ve bir EC2 istiyorum" diyoruz.
+            Terraform bu istegi alip AWS provider'i uzerinden gerceklestiriyor.
+          </p>
+          <p>
+            Bu projede iki katman var. Birincisi bootstrap katmani: state'i S3'e koyuyor, lock icin DynamoDB
+            kullaniyor ve GitHub Actions'in AWS'e OIDC ile guvenli sekilde baglanmasi icin IAM role hazirliyor.
+            Ikincisi asil uygulama katmani: EC2 uzerine Docker kurup Caddy ve n8n'i ayaga kaldiriyor.
+          </p>
+        </div>
+
+        <div class="note-panel" data-note-panel="deep">
+          <h3>Detayli anlatim</h3>
+          <p>
+            Terraform'un gucu, altyapiyi desired state mantigiyla yonetmesinde. Sen sonucu tarif ediyorsun;
+            arac, bu sonuca ulasmak icin eksik kaynagi yaratmak veya mevcut kaynagi guncellemek uzere hareket ediyor.
+          </p>
+          <ul>
+            <li><code>main.tf</code> agi ve sunucuyu kuruyor.</li>
+            <li><code>variables.tf</code> maliyet, guvenlik ve davranis ayarlarini disaridan aliyor.</li>
+            <li><code>outputs.tf</code> sonucta hangi IP ve URL ile sisteme gidilecegini veriyor.</li>
+            <li><code>bootstrap/main.tf</code> remote state ve GitHub OIDC kuruyor.</li>
+            <li><code>scripts/</code> klasoru ise instance acildiginda icerde ne olacagini belirliyor.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="faq" class="panel reveal">
+        <div class="section-head">
+          <div class="eyebrow">11. SSS</div>
+          <h2>Muhtemel sorular</h2>
+          <p>
+            Anlatimda en cok gelen sorular burada toplanabilir.
+          </p>
+        </div>
+
+        <div class="faq">
+          <details>
+            <summary>Terraform script dili mi, konfigurasyon dili mi?</summary>
+            <p>Daha cok deklaratif konfigurasyon dili gibi dusunmek gerekir. Adim adim "nasil" degil, sonuc olarak "ne" yazilir.</p>
+          </details>
+          <details>
+            <summary>Provider ile resource arasindaki fark ne?</summary>
+            <p>Provider, hangi platformla konusacagini belirler. Resource ise o platformda yaratacagin somut nesnedir.</p>
+          </details>
+          <details>
+            <summary>State neden kritik?</summary>
+            <p>Terraform bir sonraki degisiklikte neyin kendine ait oldugunu state'ten bilir. O yuzden burada state S3 uzerinde merkezi tutuluyor.</p>
+          </details>
+          <details>
+            <summary>Bu projede neden bootstrap klasoru var?</summary>
+            <p>Cunku ana stack'ten once remote state ve OIDC gibi operasyonel temellerin hazir olmasi gerekiyor.</p>
+          </details>
+          <details>
+            <summary>Docker neden Terraform yerine script ile kuruluyor?</summary>
+            <p>Terraform'un ana gorevi altyapiyi yaratmak. Sunucu icindeki ilk kurulum ise <code>user_data</code> ile yapmak daha dogal.</p>
+          </details>
+          <details>
+            <summary>Neden module kullanilmamis?</summary>
+            <p>Kucuk ve anlatilabilir projelerde modulsuz, dogrudan okunur yapi bazen daha ogretici olur.</p>
+          </details>
+        </div>
+      </section>
+
+      <div class="footer reveal">
+        Dosya: <code>docs/terraform-anlatim.html</code><br>
+        Bu versiyon, onceki agresif tasarim yerine daha sakin ve uzun sure bakilabilir bir duzenle yeniden kuruldu.
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const progressBar = document.getElementById("progress-bar");
+    const tocLinks = Array.from(document.querySelectorAll(".toc-links a"));
+    const sections = Array.from(document.querySelectorAll("section[id]"));
+    const revealBlocks = document.querySelectorAll(".reveal");
+    const tabButtons = document.querySelectorAll(".tab-button");
+    const tabPanels = document.querySelectorAll(".tab-panel");
+    const noteButtons = document.querySelectorAll(".note-button");
+    const notePanels = document.querySelectorAll(".note-panel");
+
+    const updateProgress = () => {
+      const scrollTop = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const ratio = maxScroll > 0 ? (scrollTop / maxScroll) * 100 : 0;
+      progressBar.style.width = ratio + "%";
+    };
+
+    const navObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach((link) => {
+            link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+          });
+        }
+      });
+    }, {
+      rootMargin: "-35% 0px -50% 0px",
+      threshold: 0.01
+    });
+
+    sections.forEach((section) => navObserver.observe(section));
+
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.12
+    });
+
+    revealBlocks.forEach((block) => {
+      if (!block.classList.contains("visible")) {
+        revealObserver.observe(block);
+      }
+    });
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.tab;
+        tabButtons.forEach((item) => item.classList.toggle("active", item === button));
+        tabPanels.forEach((panel) => {
+          panel.classList.toggle("active", panel.dataset.panel === target);
+        });
+      });
+    });
+
+    noteButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.note;
+        noteButtons.forEach((item) => item.classList.toggle("active", item === button));
+        notePanels.forEach((panel) => {
+          panel.classList.toggle("active", panel.dataset.notePanel === target);
+        });
+      });
+    });
+
+    updateProgress();
+    window.addEventListener("scroll", updateProgress, { passive: true });
+    window.addEventListener("resize", updateProgress);
+  </script>
+</body>
+</html>
